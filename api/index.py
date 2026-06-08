@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from openai import OpenAI
 
-# Se define explícitamente al inicio para que Vercel lo detecte a nivel de módulo
+# Definición principal en el nivel superior para Vercel
 app = FastAPI()
 
 app.add_middleware(
@@ -20,12 +20,12 @@ app.add_middleware(
 GROK_API_KEY = os.environ.get("GROK_API_KEY")
 FOOTBALL_API_KEY = os.environ.get("FOOTBALL_API_KEY")
 
-# Inicialización corregida con la URL base correcta para el cliente de Groq
+# Inicialización segura con la URL base raíz para evitar duplicación de rutas
 grok_client = None
 if GROK_API_KEY:
     grok_client = OpenAI(
         api_key=GROK_API_KEY,
-        base_url="https://groq.com"
+        base_url="https://api.groq.com/openai/v1"
     )
 
 def obtener_datos_final_mundo():
@@ -46,6 +46,7 @@ def obtener_datos_final_mundo():
         if res_list.status_code == 200:
             data_list = res_list.json()
             if data_list.get("response"):
+                # CORRECCIÓN AQUÍ: Se añade el índice [0] ya que 'response' es una lista de partidos
                 fixture_id = data_list["response"][0]["fixture"]["id"]
                 resultado["detalles"]["partido"] = f"{data_list['response'][0]['teams']['home']['name']} vs {data_list['response'][0]['teams']['away']['name']}"
                 
@@ -111,7 +112,6 @@ async def obtener_trivias():
     datos = obtener_datos_final_mundo()
     info_jugadores = datos.get('jugadores', [])[:15]
     
-    # CORRECCIÓN DE INDENTACIÓN AQUÍ
     if not info_jugadores:
         prompt_contenido = (
             "Crea 50 preguntas de trivia basadas únicamente en los hechos ocurridos "
