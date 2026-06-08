@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚽ Golazo IA - Trivia Mundialista</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #151f32;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #10b981;
+            --error: #ef4444;
+            --text: #f3f4f6;
+            --text-muted: #6b7280;
+        }
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 550px;
+            text-align: center;
+        }
+        h1 { margin-top: 0; color: #fff; font-size: 2rem; }
+        p { color: var(--text-muted); }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            margin-top: 15px;
+        }
+        .btn:hover { background-color: var(--primary-hover); }
+        .btn:disabled { background-color: #4b5563; cursor: not-allowed; }
+        
+        .options-container {
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn-option {
+            background-color: #1e293b;
+            color: var(--text);
+            border: 1px solid #334155;
+            padding: 14px;
+            text-align: left;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        .btn-option:hover:not(:disabled) {
+            background-color: #334155;
+            border-color: #475569;
+        }
+        
+        .feedback {
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 15px;
+            display: none;
+        }
+        .feedback.correct { background-color: rgba(16, 185, 129, 0.2); color: var(--success); display: block; }
+        .feedback.incorrect { background-color: rgba(239, 68, 68, 0.2); color: var(--error); display: block; }
+        
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            background: #1e293b;
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+        
+        .loader {
+            border: 4px solid #1e293b;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="scr-menu" class="screen active">
+            <h1>⚽ Golazo IA</h1>
+            <p>Trivia en tiempo real impulsada por Grok-2 y estadísticas de la Final de Qatar 2022.</p>
+            <button class="btn" onclick="iniciarJuego()">Iniciar Trivia 🚀</button>
+        </div>
+
+        <div id="scr-loading" class="screen">
+            <h1>Consultando Estadísticas...</h1>
+            <div class="loader"></div>
+            <p>Conectando con la API de fútbol y generando preguntas con Inteligencia Artificial...</p>
+        </div>
+
+        <div id="scr-quiz" class="screen">
+            <div class="scoreboard">
+                <span id="quiz-progress">Pregunta: 0/0</span>
+                <span id="local-score" style="color: var(--success); font-weight: bold;">0 pts</span>
+            </div>
+            <h3 id="box-pregunta" style="text-align: left; line-height: 1.4;">Cargando...</h3>
+            <div id="container-options" class="options-container"></div>
+            <div id="box-feedback" class="feedback"></div>
+            <button id="btn-next-action" class="btn" style="display: none;" onclick="avanzarPregunta()">Siguiente Pregunta ➡️</button>
+        </div>
+
+        <div id="scr-results" class="screen">
+            <h1>🏆 ¡Trivia Completada!</h1>
+            <p>Tu puntuación final es de:</p>
+            <h2 id="box-final-score" style="color: var(--success); font-size: 2.5rem; margin: 20px 0;">0 pts</h2>
+            <button class="btn" onclick="cambiarPantalla('scr-menu')">Volver a Jugar 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        let preguntasPartida = [];
+        let indicePreguntaActual = 0;
+        let puntosLocal = 0;
+        let preguntaActualObj = null;
+
+        // Banco local por si falla el fetch o no hay conexión a internet
+        const BANCO_NATIVO = [
+            {"pregunta": "¿Qué equipo venció al Real Madrid en la Intercontinental del 2000?", "opciones": ["Boca Juniors", "River Plate", "Palmeiras"], "correcta": "Boca Juniors"},
+            {"pregunta": "¿Quién es el máximo goleador histórico de la Selección Argentina?", "opciones": ["Lionel Messi", "Gabriel Batistuta", "Diego Maradona"], "correcta": "Lionel Messi"},
+            {"pregunta": "¿En qué club europeo debutó el Kun Agüero?", "opciones": ["Atlético de Madrid", "Manchester City", "Barcelona"], "correcta": "Atlético de Madrid"}
+        ];
+
+        function cambiarPantalla(pantallaId) {
+            document.querySelectorAll('.screen').forEach(scr => scr.classList.remove('active'));
+            document.getElementById(pantallaId).classList.add('active');
+        }
+
+        async function iniciarJuego() {
+            cambiarPantalla("scr-loading");
+            puntosLocal = 0;
+            indicePreguntaActual = 0;
+            document.getElementById("local-score").innerText = "0 pts";
+
+            try {
+                // Petición al endpoint virtual unificado de Vercel
+                const respuesta = await fetch("/api/trivias");
+                if (!respuesta.ok) throw new Error("Error de servidor");
+                
+                const datos = await respuesta.json();
+                preguntasPartida = datos.preguntas && datos.preguntas.length > 0 ? datos.preguntas : BANCO_NATIVO;
+            } catch (error) {
+                console.log("Error al conectar al backend, usando banco local de emergencia.", error);
+                preguntasPartida = BANCO_NATIVO;
+            }
+
+            cambiarPantalla("scr-quiz");
+            renderizarPreguntaActual();
+        }
+
+        function renderizarPreguntaActual() {
+            document.getElementById("box-feedback").className = "feedback";
+            document.getElementById("box-feedback").style.display = "none";
+            document.getElementById("btn-next-action").style.display = "none";
+
+            preguntaActualObj = preguntasPartida[indicePreguntaActual];
+            
+            document.getElementById("quiz-progress").innerText = `Pregunta: ${indicePreguntaActual + 1}/${preguntasPartida.length}`;
+            document.getElementById("box-pregunta").innerText = preguntaActualObj.pregunta;
+
+            const containerOptions = document.getElementById("container-options");
+            containerOptions.innerHTML = "";
+
+            preguntaActualObj.opciones.forEach(opcion => {
+                const btn = document.createElement("button");
+                btn.className = "btn-option";
+                btn.innerText = opcion;
+                btn.onclick = () => verificarRespuesta(opcion);
+                containerOptions.appendChild(btn);
+            });
+        }
+
+        function verificarRespuesta(opcionSeleccionada) {
+            // Deshabilita los botones para evitar que cambien la opción elegida
+            document.querySelectorAll(".btn-option").forEach(b => b.disabled = true);
+            const feedback = document.getElementById("box-feedback");
+            
+            if (opcionSeleccionada === preguntaActualObj.correcta) {
+                feedback.innerText = "¡Correcto! 🚀";
+                feedback.className = "feedback correct";
+                puntosLocal += 10;
+                document.getElementById("local-score").innerText = `${puntosLocal} pts`;
+            } else {
+                feedback.innerText = `Incorrecto. La respuesta era: ${preguntaActualObj.correcta}`;
+                feedback.className = "feedback incorrect";
+            }
+
+            const esUltima = (indicePreguntaActual === preguntasPartida.length - 1);
+            document.getElementById("btn-next-action").innerText = esUltima ? "Ver Resultados Finales 🏁" : "Siguiente Pregunta ➡️";
+            document.getElementById("btn-next-action").style.display = "block";
+        }
+
+        function avanzarPregunta() {
+            indicePreguntaActual++;
+            if (indicePreguntaActual < preguntasPartida.length) {
+                renderizarPreguntaActual();
+            } else {
+                document.getElementById("box-final-score").innerText = `${puntosLocal} pts`;
+                cambiarPantalla("scr-results");
+            }
+        }
+    </script>
+</body>
+</html>
