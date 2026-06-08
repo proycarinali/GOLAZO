@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from openai import OpenAI
 
+# Se define explícitamente al inicio para que Vercel lo detecte a nivel de módulo
 app = FastAPI()
 
 app.add_middleware(
