@@ -24,14 +24,14 @@ grok_client = None
 if GROK_API_KEY:
     grok_client = OpenAI(
         api_key=GROK_API_KEY,
-        base_url="https://api.groq.com/openai/v1"
+        base_url="https://groq.com"
     )
 
 def obtener_datos_final_mundo():
     # --- CAMBIO NECESARIO ---
     # En lugar de usar un ID fijo que devuelve datos vacíos, 
     # buscamos el último partido de la Premier League (ID 39).
-    base_url = "https://v3.football.api-sports.io"
+    base_url = "https://api-sports.io"
     headers = {
         "x-apisports-key": FOOTBALL_API_KEY or "",
         "x-rapidapi-host": "v3.football.api-sports.io"
@@ -109,20 +109,22 @@ async def obtener_trivias():
 
     datos = obtener_datos_final_mundo()
     info_jugadores = datos.get('jugadores', [])[:15]
+    
+    # CORRECCIÓN DE INDENTACIÓN AQUÍ
     if not info_jugadores:
-    prompt_contenido = (
-        "Crea 50 preguntas de trivia basadas únicamente en los hechos ocurridos "
-        "en el último partido del último mundial (por favor no alucines no inventes datos salvo para las respuestas a elegir). "
-        "No alucines datos. Si no hay información suficiente sobre algún aspecto, "
-        "omítelo. Formato de salida: {'preguntas': [{'pregunta': '...', "
-        "'opciones': ['A','B','C'], 'correcta': '...'}]}"
-    )
-else:
-    prompt_contenido = (
-        f"Crea 50 preguntas de trivia basándote estrictamente en estos jugadores: "
-        f"{json.dumps(info_jugadores)}. Formato: {{'preguntas': [{{'pregunta': '...', "
-        f"'opciones': ['A','B','C'], 'correcta': '...'}}]}}"
-    )
+        prompt_contenido = (
+            "Crea 50 preguntas de trivia basadas únicamente en los hechos ocurridos "
+            "en el último partido del último mundial (por favor no alucines no inventes datos salvo para las respuestas a elegir). "
+            "No alucines datos. Si no hay información suficiente sobre algún aspecto, "
+            "omítelo. Formato de salida: {'preguntas': [{'pregunta': '...', "
+            "'opciones': ['A','B','C'], 'correcta': '...'}]}"
+        )
+    else:
+        prompt_contenido = (
+            f"Crea 50 preguntas de trivia basándote estrictamente en estos jugadores: "
+            f"{json.dumps(info_jugadores)}. Formato: {{'preguntas': [{{'pregunta': '...', "
+            f"'opciones': ['A','B','C'], 'correcta': '...'}}]}}"
+        )
     
     try:
         response = grok_client.chat.completions.create(
