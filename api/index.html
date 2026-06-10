@@ -177,6 +177,7 @@
                 if (!respuesta.ok) throw new Error("Error de servidor");
                 
                 const datos = await respuesta.json();
+                if (datos.error) throw new Error(datos.error);
                 preguntasPartida = datos.preguntas && datos.preguntas.length > 0 ? datos.preguntas : BANCO_NATIVO;
             } catch (error) {
                 console.log("Error al conectar al backend, usando banco local de emergencia.", error);
