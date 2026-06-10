@@ -87,6 +87,7 @@ def obtener_datos_final_mundo():
     
 @app.get("/", response_class=HTMLResponse)
 async def root():
+    # Usar __file__ es correcto para que Vercel encuentre el archivo local
     ruta_html = os.path.join(os.path.dirname(__file__), "index.html")
     with open(ruta_html, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
