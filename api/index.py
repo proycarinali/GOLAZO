@@ -32,7 +32,7 @@ def obtener_datos_final_mundo():
     # --- CAMBIO NECESARIO ---
     # En lugar de usar un ID fijo que devuelve datos vacíos, 
     # buscamos el último partido de la Premier League (ID 39).
-    base_url = "https://api-sports.io"
+    base_url = "https://v3.football.api-sports.io"
     headers = {
         "x-apisports-key": FOOTBALL_API_KEY or "",
         "x-rapidapi-host": "v3.football.api-sports.io"
@@ -131,7 +131,7 @@ async def obtener_trivias():
         response = grok_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt_contenido}],
-            timeout=15
+            max_tokens=4096
         )
         raw_text = response.choices[0].message.content
         texto = raw_text.replace("```json", "").replace("```", "").strip()
