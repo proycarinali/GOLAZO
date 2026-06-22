@@ -6,7 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from openai import OpenAI
 
-# Definicion principal en el nivel superior para Vercel
 app = FastAPI()
 
 app.add_middleware(
@@ -17,65 +16,128 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-GROK_API_KEY = os.environ.get("GROK_API_KEY")
-FOOTBALL_API_KEY = os.environ.get("FOOTBALL_API_KEY")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
-grok_client = None
-if GROK_API_KEY:
-    grok_client = OpenAI(
-        api_key=GROK_API_KEY,
-        base_url="https://api.groq.com/openai/v1"
-    )
+openai_client = None
+if OPENAI_API_KEY:
+    openai_client = OpenAI(api_key=OPENAI_API_KEY)
+
+
+def supabase_get(tabla: str, params: dict) -> list:
+    url = f"{SUPABASE_URL}/rest/v1/{tabla}"
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+    }
+    res = requests.get(url, headers=headers, params=params, timeout=10)
+    res.raise_for_status()
+    return res.json()
 
 
 def obtener_datos_final_mundo():
-    base_url = "https://v3.football.api-sports.io"
-    headers = {
-        "x-apisports-key": FOOTBALL_API_KEY or "",
-        "x-rapidapi-host": "v3.football.api-sports.io"
-    }
-
     resultado = {"detalles": {"partido": "Buscando partido reciente..."}, "jugadores": []}
 
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        resultado["error"] = "Variables SUPABASE_URL o SUPABASE_KEY no configuradas"
+        return resultado
+
     try:
-        res_list = requests.get(
-            f"{base_url}/fixtures?league=39&season=2024&status=FT&last=1",
-            headers=headers, timeout=10
+        # 1. Último partido
+        partidos = supabase_get("partidos", {
+            "order": "fecha_partido.desc",
+            "limit": 1,
+            "select": "*",
+        })
+
+        if not partidos:
+            resultado["detalles"]["partido"] = "No se encontraron partidos"
+            return resultado
+
+        partido = partidos[0]
+        id_partido = partido["id_partido"]
+        resultado["detalles"]["partido"] = (
+            f"{partido['equipo_local_nombre']} {partido['equipo_local_goles']} "
+            f"- {partido['equipo_visitante_goles']} {partido['equipo_visitante_nombre']}"
         )
-        if res_list.status_code == 200:
-            data_list = res_list.json()
-            if data_list.get("response"):
-                fixture = data_list["response"][0]
-                fixture_id = fixture["fixture"]["id"]
-                resultado["detalles"]["partido"] = (
-                    f"{fixture['teams']['home']['name']} vs {fixture['teams']['away']['name']}"
-                )
+        resultado["detalles"]["liga"] = partido.get("liga_nombre", "N/A")
+        resultado["detalles"]["fecha"] = str(partido.get("fecha_partido", "N/A"))
+        resultado["detalles"]["ganador"] = partido.get("ganador", "N/A")
+        resultado["detalles"]["tanda_penales"] = partido.get("tanda_penales", False)
 
-                url = f"{base_url}/fixtures/players?fixture={fixture_id}"
-                res = requests.get(url, headers=headers, timeout=10)
+        # 2. Jugadores del partido
+        jugadores_rows = supabase_get("jugadores_partido", {
+            "id_partido": f"eq.{id_partido}",
+            "select": "*",
+        })
 
-                if res.status_code == 200:
-                    data = res.json()
-                    if "response" in data and data["response"]:
-                        for team in data["response"]:
-                            for player in team.get("players", []):
-                                stats = player.get("statistics", [{}])[0]
-                                resultado["jugadores"].append({
-                                    "nombre": player["player"]["name"],
-                                    "posicion": stats.get("games", {}).get("position", "N/A"),
-                                    "minutos": stats.get("games", {}).get("minutes", 0),
-                                    "calificacion": stats.get("games", {}).get("rating", "N/A"),
-                                    "goles": stats.get("goals", {}).get("total", 0),
-                                    "asistencias": stats.get("goals", {}).get("assists", 0),
-                                    "tiros_total": stats.get("shots", {}).get("total", 0),
-                                    "tiros_al_arco": stats.get("shots", {}).get("on", 0),
-                                    "pases_completados": stats.get("passes", {}).get("accuracy", "0%"),
-                                    "faltas_cometidas": stats.get("fouls", {}).get("committed", 0),
-                                    "faltas_recibidas": stats.get("fouls", {}).get("drawn", 0),
-                                    "tarjetas_amarillas": stats.get("cards", {}).get("yellow", 0),
-                                    "tarjetas_rojas": stats.get("cards", {}).get("red", 0),
-                                    "atajadas": stats.get("goalkeeper", {}).get("saves", 0)
-                                })
+        # 3. Eventos del partido
+        eventos_rows = supabase_get("eventos_partido", {
+            "id_partido": f"eq.{id_partido}",
+            "select": "*",
+        })
+
+        # Calcular estadísticas por jugador a partir de eventos
+        stats: dict = {}
+
+        for ev in eventos_rows:
+            jid = ev.get("id_jugador")
+            if not jid:
+                continue
+            if jid not in stats:
+                stats[jid] = {
+                    "goles": 0,
+                    "asistencias": 0,
+                    "tarjetas_amarillas": 0,
+                    "tarjetas_rojas": 0,
+                }
+            tipo = (ev.get("tipo_evento") or "").lower()
+            if tipo in ("goal", "gol", "penalty"):
+                stats[jid]["goles"] += 1
+            elif tipo in ("assist", "asistencia"):
+                stats[jid]["asistencias"] += 1
+            elif tipo in ("yellowcard", "tarjeta amarilla", "yellow card"):
+                stats[jid]["tarjetas_amarillas"] += 1
+            elif tipo in ("redcard", "tarjeta roja", "red card"):
+                stats[jid]["tarjetas_rojas"] += 1
+
+            # Asistente dentro del mismo evento de gol
+            aid = ev.get("id_asistente")
+            if aid and tipo in ("goal", "gol", "penalty"):
+                if aid not in stats:
+                    stats[aid] = {
+                        "goles": 0,
+                        "asistencias": 0,
+                        "tarjetas_amarillas": 0,
+                        "tarjetas_rojas": 0,
+                    }
+                stats[aid]["asistencias"] += 1
+
+        # 4. Armar lista de jugadores con sus stats
+        for jug in jugadores_rows:
+            jid = jug.get("id_jugador", "")
+            s = stats.get(jid, {})
+            resultado["jugadores"].append({
+                "nombre": jug.get("nombre_jugador", "N/A"),
+                "posicion": jug.get("posicion", "N/A"),
+                "titular": jug.get("titular", True),
+                "equipo_id": jug.get("id_equipo", "N/A"),
+                "goles": s.get("goles", 0),
+                "asistencias": s.get("asistencias", 0),
+                "tarjetas_amarillas": s.get("tarjetas_amarillas", 0),
+                "tarjetas_rojas": s.get("tarjetas_rojas", 0),
+                "minutos": None,
+                "calificacion": None,
+                "tiros_total": None,
+                "tiros_al_arco": None,
+                "pases_completados": None,
+                "faltas_cometidas": None,
+                "faltas_recibidas": None,
+                "atajadas": None,
+            })
+
     except Exception as e:
         resultado["error"] = str(e)
         resultado["detalles"]["debug"] = f"Excepcion: {type(e).__name__}: {str(e)}"
@@ -85,7 +147,6 @@ def obtener_datos_final_mundo():
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    # El HTML debe estar en api/index.html para que __file__ lo encuentre
     ruta_html = os.path.join(os.path.dirname(__file__), "index.html")
     with open(ruta_html, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
@@ -94,31 +155,30 @@ async def root():
 @app.get("/api/test")
 async def probar_apis():
     datos = obtener_datos_final_mundo()
-    grok_res = {"status": "No configurado"}
+    openai_res = {"status": "No configurado"}
 
-    if grok_client:
+    if openai_client:
         try:
-            response = grok_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+            response = openai_client.chat.completions.create(
+                model="gpt-4o-mini",
                 messages=[{"role": "user", "content": "Hola"}]
             )
-            grok_res = {"status": 200, "body": response.choices[0].message.content}
+            openai_res = {"status": 200, "body": response.choices[0].message.content}
         except Exception as e:
-            grok_res = {"error": str(e)}
+            openai_res = {"error": str(e)}
 
-    return {"grok": grok_res, "datos_futbol": datos}
+    return {"openai": openai_res, "datos_futbol": datos}
 
 
 @app.get("/api/trivias")
 async def obtener_trivias():
-    if not grok_client:
-        return {"error": "GROK_API_KEY no configurada"}
+    if not openai_client:
+        return {"error": "OPENAI_API_KEY no configurada"}
 
     datos = obtener_datos_final_mundo()
     info_jugadores = datos.get("jugadores", [])[:15]
 
     if not info_jugadores:
-        # BUG CORREGIDO: el string estaba roto con un salto de linea sin cerrar
         prompt_contenido = (
             "Eres un experto en futbol. Basandote en tus conocimientos sobre el ultimo partido "
             "del ultimo Mundial, o del Mundial en curso si lo hay, "
@@ -133,14 +193,16 @@ async def obtener_trivias():
         )
     else:
         prompt_contenido = (
-            f"Crea 50 preguntas de trivia basandote estrictamente en estos jugadores: "
-            f"{json.dumps(info_jugadores)}. Formato: {{\"preguntas\": [{{\"pregunta\": \"...\", "
+            f"Crea 50 preguntas de trivia basandote estrictamente en estos jugadores y partido: "
+            f"Partido: {datos['detalles']}. "
+            f"Jugadores y estadisticas: {json.dumps(info_jugadores, ensure_ascii=False)}. "
+            f"Formato: {{\"preguntas\": [{{\"pregunta\": \"...\", "
             f"\"opciones\": [\"A\",\"B\",\"C\"], \"correcta\": \"...\"}}]}}"
         )
 
     try:
-        response = grok_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt_contenido}],
             max_tokens=4096
         )
