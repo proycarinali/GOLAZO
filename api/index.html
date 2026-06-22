@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚽ Golazo IA - Trivia Mundialista</title>
+    <title>⚽ Golazo IA - Trivia de Fútbol</title>
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -14,32 +14,44 @@
             --error: #ef4444;
             --text: #f3f4f6;
             --text-muted: #6b7280;
+            --border: #1e293b;
+            --option-bg: #1e293b;
+            --option-border: #334155;
+            --option-hover: #334155;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--bg-color);
             color: var(--text);
-            margin: 0;
-            padding: 20px;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            align-items: flex-start;
+            padding: 20px;
         }
+
         .container {
             background-color: var(--card-bg);
             padding: 30px;
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             width: 100%;
-            max-width: 550px;
+            max-width: 580px;
             text-align: center;
         }
+
         h1 { margin-top: 0; color: #fff; font-size: 2rem; }
-        p { color: var(--text-muted); }
+        h2 { color: #fff; font-size: 1.4rem; margin-bottom: 8px; }
+        p  { color: var(--text-muted); margin-top: 6px; }
+
+        /* --- SCREENS --- */
         .screen { display: none; }
         .screen.active { display: block; }
-        
+
+        /* --- BOTÓN GENÉRICO --- */
         .btn {
             background-color: var(--primary);
             color: white;
@@ -55,17 +67,143 @@
         }
         .btn:hover { background-color: var(--primary-hover); }
         .btn:disabled { background-color: #4b5563; cursor: not-allowed; }
-        
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--option-border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+        .btn-secondary:hover { border-color: #fff; color: #fff; }
+
+        /* --- GRILLA DE LIGAS --- */
+        .leagues-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .league-card {
+            background: var(--option-bg);
+            border: 1px solid var(--option-border);
+            border-radius: 12px;
+            padding: 16px 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .league-card:hover {
+            background: var(--option-hover);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        .league-card .flag { font-size: 28px; }
+        .league-card .name { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; }
+        .league-card .country { font-size: 10px; color: var(--text-muted); }
+
+        /* --- GRILLA DE PARTIDOS --- */
+        .matches-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .match-card {
+            background: var(--option-bg);
+            border: 1px solid var(--option-border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .match-card:hover {
+            background: var(--option-hover);
+            border-color: var(--primary);
+        }
+        .match-card.active {
+            border-color: var(--success);
+            background: rgba(16,185,129,0.08);
+        }
+        .match-teams { font-size: 14px; font-weight: 600; color: var(--text); }
+        .match-score {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            background: #0b0f19;
+            border-radius: 8px;
+            padding: 4px 12px;
+            min-width: 70px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .match-date { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+        /* --- HEADER DE NAVEGACIÓN --- */
+        .nav-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 13px;
+            width: fit-content;
+            transition: color 0.2s;
+        }
+        .nav-back:hover { color: #fff; }
+        .nav-back span { font-size: 16px; }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+        .league-badge {
+            font-size: 11px;
+            background: rgba(37,99,235,0.2);
+            border: 1px solid rgba(37,99,235,0.4);
+            color: #93c5fd;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        /* --- QUIZ --- */
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            background: var(--option-bg);
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
         .options-container {
             margin: 20px 0;
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
+
         .btn-option {
-            background-color: #1e293b;
+            background-color: var(--option-bg);
             color: var(--text);
-            border: 1px solid #334155;
+            border: 1px solid var(--option-border);
             padding: 14px;
             text-align: left;
             border-radius: 8px;
@@ -74,10 +212,10 @@
             transition: all 0.2s;
         }
         .btn-option:hover:not(:disabled) {
-            background-color: #334155;
+            background-color: var(--option-hover);
             border-color: #475569;
         }
-        
+
         .feedback {
             padding: 12px;
             border-radius: 8px;
@@ -85,169 +223,428 @@
             margin-top: 15px;
             display: none;
         }
-        .feedback.correct { background-color: rgba(16, 185, 129, 0.2); color: var(--success); display: block; }
-        .feedback.incorrect { background-color: rgba(239, 68, 68, 0.2); color: var(--error); display: block; }
-        
-        .scoreboard {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-            background: #1e293b;
-            padding: 10px 15px;
-            border-radius: 8px;
-        }
-        
+        .feedback.correct  { background: rgba(16,185,129,0.2); color: var(--success); display: block; }
+        .feedback.incorrect{ background: rgba(239,68,68,0.2);  color: var(--error);   display: block; }
+
+        /* --- LOADER --- */
         .loader {
-            border: 4px solid #1e293b;
+            border: 4px solid var(--option-bg);
             border-top: 4px solid var(--primary);
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
+            width: 44px;
+            height: 44px;
+            animation: spin 0.9s linear infinite;
+            margin: 24px auto;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- RESULTS --- */
+        .result-score {
+            color: var(--success);
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin: 16px 0;
+        }
+        .result-league {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
         }
     </style>
 </head>
 <body>
+<div class="container">
 
-    <div class="container">
-        <div id="scr-menu" class="screen active">
-            <h1>⚽ Golazo IA</h1>
-            <p>Trivia en tiempo real impulsada por Grok-2 y estadísticas de la Final de Qatar 2022.</p>
-            <button class="btn" onclick="iniciarJuego()">Iniciar Trivia 🚀</button>
-        </div>
+    <!-- ════════════════════════════════════════
+         PANTALLA 1 — Menú de ligas
+    ════════════════════════════════════════ -->
+    <div id="scr-menu" class="screen active">
+        <h1>⚽ Golazo IA</h1>
+        <p>Trivia de fútbol en tiempo real con estadísticas reales. Elegí una liga para empezar.</p>
 
-        <div id="scr-loading" class="screen">
-            <h1>Consultando Estadísticas...</h1>
-            <div class="loader"></div>
-            <p>Conectando con la API de fútbol y generando preguntas con Inteligencia Artificial...</p>
-        </div>
-
-        <div id="scr-quiz" class="screen">
-            <div class="scoreboard">
-                <span id="quiz-progress">Pregunta: 0/0</span>
-                <span id="local-score" style="color: var(--success); font-weight: bold;">0 pts</span>
-            </div>
-            <h3 id="box-pregunta" style="text-align: left; line-height: 1.4;">Cargando...</h3>
-            <div id="container-options" class="options-container"></div>
-            <div id="box-feedback" class="feedback"></div>
-            <button id="btn-next-action" class="btn" style="display: none;" onclick="avanzarPregunta()">Siguiente Pregunta ➡️</button>
-        </div>
-
-        <div id="scr-results" class="screen">
-            <h1>🏆 ¡Trivia Completada!</h1>
-            <p>Tu puntuación final es de:</p>
-            <h2 id="box-final-score" style="color: var(--success); font-size: 2.5rem; margin: 20px 0;">0 pts</h2>
-            <button class="btn" onclick="cambiarPantalla('scr-menu')">Volver a Jugar 🔄</button>
-        </div>
+        <div class="leagues-grid" id="leagues-grid"></div>
     </div>
 
-    <script>
-        let preguntasPartida = [];
-        let indicePreguntaActual = 0;
-        let puntosLocal = 0;
-        let preguntaActualObj = null;
+    <!-- ════════════════════════════════════════
+         PANTALLA 2 — Partidos de la liga
+    ════════════════════════════════════════ -->
+    <div id="scr-partidos" class="screen">
+        <div class="nav-back" onclick="volverAlMenu()">
+            <span>←</span> Todas las ligas
+        </div>
+        <div class="section-header">
+            <h2 id="partidos-liga-nombre">Liga</h2>
+            <span class="league-badge" id="partidos-liga-badge"></span>
+        </div>
+        <p>Elegí un partido para generar la trivia con IA</p>
 
-        // Banco local por si falla el fetch o no hay conexión a internet
-        const BANCO_NATIVO = [
-            {"pregunta": "¿Qué resultado tuvo la Final del Mundial Qatar 2022 al final del tiempo reglamentario?", "opciones": ["Argentina 2-2 Francia", "Argentina 3-3 Francia", "Argentina 2-0 Francia"], "correcta": "Argentina 3-3 Francia"},
-            {"pregunta": "¿Cuántos goles marcó Kylian Mbappé en la Final de Qatar 2022?", "opciones": ["1", "2", "3"], "correcta": "3"},
-            {"pregunta": "¿Quién abrió el marcador en la Final de Qatar 2022?", "opciones": ["Lionel Messi", "Ángel Di María", "Julián Álvarez"], "correcta": "Lionel Messi"},
-            {"pregunta": "¿En qué estadio se jugó la Final del Mundial Qatar 2022?", "opciones": ["Estadio Al Bayt", "Estadio Lusail", "Estadio Al Thumama"], "correcta": "Estadio Lusail"},
-            {"pregunta": "¿Cómo terminó la tanda de penales en la Final de Qatar 2022?", "opciones": ["Argentina 4-2 Francia", "Argentina 3-2 Francia", "Argentina 5-3 Francia"], "correcta": "Argentina 4-2 Francia"},
-            {"pregunta": "¿Quién atajó el penal decisivo en la Final de Qatar 2022?", "opciones": ["Franco Armani", "Emiliano Martínez", "Sergio Romero"], "correcta": "Emiliano Martínez"},
-            {"pregunta": "¿Qué jugador convirtió el segundo gol de Argentina en la Final?", "opciones": ["Ángel Di María", "Julián Álvarez", "Lionel Messi"], "correcta": "Ángel Di María"},
-            {"pregunta": "¿Cuándo se jugó la Final del Mundial Qatar 2022?", "opciones": ["11 de diciembre de 2022", "18 de diciembre de 2022", "25 de diciembre de 2022"], "correcta": "18 de diciembre de 2022"},
-            {"pregunta": "¿Cuántas Copas del Mundo ganó Argentina hasta Qatar 2022?", "opciones": ["2", "3", "4"], "correcta": "3"},
-            {"pregunta": "¿Quién fue el árbitro de la Final de Qatar 2022?", "opciones": ["Szymon Marciniak", "Wilton Sampaio", "Stéphanie Frappart"], "correcta": "Szymon Marciniak"},
-            {"pregunta": "¿En qué minuto marcó Mbappé su primer gol en la Final de Qatar 2022?", "opciones": ["Minuto 70", "Minuto 80", "Minuto 90"], "correcta": "Minuto 80"},
-            {"pregunta": "¿Qué récord personal alcanzó Messi al ganar Qatar 2022?", "opciones": ["Su primer Balón de Oro", "Su primera Copa del Mundo", "Su primer gol mundialista"], "correcta": "Su primera Copa del Mundo"}
-        ];
+        <div class="matches-grid" id="matches-grid"></div>
 
-        function cambiarPantalla(pantallaId) {
-            document.querySelectorAll('.screen').forEach(scr => scr.classList.remove('active'));
-            document.getElementById(pantallaId).classList.add('active');
-        }
+        <button class="btn-secondary" onclick="volverAlMenu()">← Cambiar liga</button>
+    </div>
 
-        async function iniciarJuego() {
-            cambiarPantalla("scr-loading");
-            puntosLocal = 0;
-            indicePreguntaActual = 0;
-            document.getElementById("local-score").innerText = "0 pts";
+    <!-- ════════════════════════════════════════
+         PANTALLA 3 — Cargando trivia
+    ════════════════════════════════════════ -->
+    <div id="scr-loading" class="screen">
+        <h1>Generando Trivia...</h1>
+        <div class="loader"></div>
+        <p id="loading-msg">Consultando estadísticas y generando preguntas con IA...</p>
+    </div>
 
-            try {
-                // Petición al endpoint virtual unificado de Vercel
-                const respuesta = await fetch("/api/trivias");
-                if (!respuesta.ok) throw new Error("Error de servidor");
-                
-                const datos = await respuesta.json();
-                if (datos.error) throw new Error(datos.error);
-                preguntasPartida = datos.preguntas && datos.preguntas.length > 0 ? datos.preguntas : BANCO_NATIVO;
-            } catch (error) {
-                console.log("Error al conectar al backend, usando banco local de emergencia.", error);
-                preguntasPartida = BANCO_NATIVO;
-            }
+    <!-- ════════════════════════════════════════
+         PANTALLA 4 — Quiz
+    ════════════════════════════════════════ -->
+    <div id="scr-quiz" class="screen">
+        <div class="scoreboard">
+            <span id="quiz-progress">Pregunta: 0/0</span>
+            <span id="local-score" style="color:var(--success);font-weight:bold;">0 pts</span>
+        </div>
+        <h3 id="box-pregunta" style="text-align:left;line-height:1.5;">Cargando...</h3>
+        <div id="container-options" class="options-container"></div>
+        <div id="box-feedback" class="feedback"></div>
+        <button id="btn-next-action" class="btn" style="display:none;" onclick="avanzarPregunta()">Siguiente ➡️</button>
+    </div>
 
-            cambiarPantalla("scr-quiz");
-            renderizarPreguntaActual();
-        }
+    <!-- ════════════════════════════════════════
+         PANTALLA 5 — Resultados
+    ════════════════════════════════════════ -->
+    <div id="scr-results" class="screen">
+        <h1>🏆 ¡Trivia completada!</h1>
+        <p class="result-league" id="result-liga"></p>
+        <p>Tu puntuación final:</p>
+        <div class="result-score" id="box-final-score">0 pts</div>
+        <button class="btn" onclick="volverAlMenu()">Jugar otra vez 🔄</button>
+        <button class="btn-secondary" onclick="cambiarPantalla('scr-partidos')">Otro partido de la misma liga</button>
+    </div>
 
-        function renderizarPreguntaActual() {
-            document.getElementById("box-feedback").className = "feedback";
-            document.getElementById("box-feedback").style.display = "none";
-            document.getElementById("btn-next-action").style.display = "none";
+</div>
 
-            preguntaActualObj = preguntasPartida[indicePreguntaActual];
-            
-            document.getElementById("quiz-progress").innerText = `Pregunta: ${indicePreguntaActual + 1}/${preguntasPartida.length}`;
-            document.getElementById("box-pregunta").innerText = preguntaActualObj.pregunta;
+<script>
+/* ──────────────────────────────────────────
+   CONFIGURACIÓN DE LIGAS
+   Cada liga apunta al endpoint real del backend.
+   Para ligas sin endpoint propio se usa /api/trivias
+   con el partido cargado en Supabase.
+────────────────────────────────────────── */
+const LIGAS = [
+    { id: "mundial",    nombre: "World Cup",         pais: "Internacional", flag: "🌍", endpoint: "/api/trivias" },
+    { id: "epl",        nombre: "Premier League",     pais: "Inglaterra",    flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", endpoint: "/api/trivias" },
+    { id: "laliga",     nombre: "La Liga",            pais: "España",        flag: "🇪🇸", endpoint: "/api/trivias" },
+    { id: "seriea",     nombre: "Serie A",            pais: "Italia",        flag: "🇮🇹", endpoint: "/api/trivias" },
+    { id: "bundesliga", nombre: "Bundesliga",         pais: "Alemania",      flag: "🇩🇪", endpoint: "/api/trivias" },
+    { id: "ligue1",     nombre: "Ligue 1",            pais: "Francia",       flag: "🇫🇷", endpoint: "/api/trivias" },
+    { id: "champions",  nombre: "Champions League",   pais: "Europa",        flag: "⭐", endpoint: "/api/trivias" },
+    { id: "mls",        nombre: "MLS",               pais: "USA",           flag: "🇺🇸", endpoint: "/api/trivias" },
+];
 
-            const containerOptions = document.getElementById("container-options");
-            containerOptions.innerHTML = "";
+/* ──────────────────────────────────────────
+   BANCO LOCAL DE EMERGENCIA
+────────────────────────────────────────── */
+const BANCO_NATIVO = [
+    {"pregunta":"¿Qué resultado tuvo la Final del Mundial Qatar 2022 al final del tiempo reglamentario?","opciones":["Argentina 2-2 Francia","Argentina 3-3 Francia","Argentina 2-0 Francia"],"correcta":"Argentina 3-3 Francia"},
+    {"pregunta":"¿Cuántos goles marcó Kylian Mbappé en la Final de Qatar 2022?","opciones":["1","2","3"],"correcta":"3"},
+    {"pregunta":"¿Quién abrió el marcador en la Final de Qatar 2022?","opciones":["Lionel Messi","Ángel Di María","Julián Álvarez"],"correcta":"Lionel Messi"},
+    {"pregunta":"¿En qué estadio se jugó la Final del Mundial Qatar 2022?","opciones":["Estadio Al Bayt","Estadio Lusail","Estadio Al Thumama"],"correcta":"Estadio Lusail"},
+    {"pregunta":"¿Cómo terminó la tanda de penales en la Final de Qatar 2022?","opciones":["Argentina 4-2 Francia","Argentina 3-2 Francia","Argentina 5-3 Francia"],"correcta":"Argentina 4-2 Francia"},
+    {"pregunta":"¿Quién atajó el penal decisivo en la Final de Qatar 2022?","opciones":["Franco Armani","Emiliano Martínez","Sergio Romero"],"correcta":"Emiliano Martínez"},
+    {"pregunta":"¿Qué jugador convirtió el segundo gol de Argentina en la Final?","opciones":["Ángel Di María","Julián Álvarez","Lionel Messi"],"correcta":"Ángel Di María"},
+    {"pregunta":"¿Cuándo se jugó la Final del Mundial Qatar 2022?","opciones":["11 de diciembre de 2022","18 de diciembre de 2022","25 de diciembre de 2022"],"correcta":"18 de diciembre de 2022"},
+    {"pregunta":"¿Cuántas Copas del Mundo ganó Argentina hasta Qatar 2022?","opciones":["2","3","4"],"correcta":"3"},
+    {"pregunta":"¿Quién fue el árbitro de la Final de Qatar 2022?","opciones":["Szymon Marciniak","Wilton Sampaio","Stéphanie Frappart"],"correcta":"Szymon Marciniak"},
+    {"pregunta":"¿En qué minuto marcó Mbappé su primer gol en la Final de Qatar 2022?","opciones":["Minuto 70","Minuto 80","Minuto 90"],"correcta":"Minuto 80"},
+    {"pregunta":"¿Qué récord personal alcanzó Messi al ganar Qatar 2022?","opciones":["Su primer Balón de Oro","Su primera Copa del Mundo","Su primer gol mundialista"],"correcta":"Su primera Copa del Mundo"},
+];
 
-            preguntaActualObj.opciones.forEach(opcion => {
-                const btn = document.createElement("button");
-                btn.className = "btn-option";
-                btn.innerText = opcion;
-                btn.onclick = () => verificarRespuesta(opcion);
-                containerOptions.appendChild(btn);
+/* ──────────────────────────────────────────
+   ESTADO GLOBAL
+────────────────────────────────────────── */
+let ligaSeleccionada  = null;
+let partidoSeleccionado = null;
+let preguntasPartida  = [];
+let indicePregunta    = 0;
+let puntos            = 0;
+let preguntaActualObj = null;
+
+/* ──────────────────────────────────────────
+   NAVEGACIÓN
+────────────────────────────────────────── */
+function cambiarPantalla(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function volverAlMenu() {
+    ligaSeleccionada   = null;
+    partidoSeleccionado = null;
+    cambiarPantalla('scr-menu');
+}
+
+/* ──────────────────────────────────────────
+   RENDER DEL MENÚ DE LIGAS
+────────────────────────────────────────── */
+function renderMenuLigas() {
+    const grid = document.getElementById('leagues-grid');
+    grid.innerHTML = '';
+    LIGAS.forEach(liga => {
+        const card = document.createElement('div');
+        card.className = 'league-card';
+        card.innerHTML = `
+            <span class="flag">${liga.flag}</span>
+            <span class="name">${liga.nombre}</span>
+            <span class="country">${liga.pais}</span>
+        `;
+        card.onclick = () => seleccionarLiga(liga);
+        grid.appendChild(card);
+    });
+}
+
+/* ──────────────────────────────────────────
+   SELECCIÓN DE LIGA → carga últimos partidos
+────────────────────────────────────────── */
+async function seleccionarLiga(liga) {
+    ligaSeleccionada = liga;
+
+    document.getElementById('partidos-liga-nombre').textContent = `${liga.flag} ${liga.nombre}`;
+    document.getElementById('partidos-liga-badge').textContent  = liga.pais;
+
+    const grid = document.getElementById('matches-grid');
+    grid.innerHTML = '<div style="color:var(--text-muted);padding:20px;text-align:center"><div class="loader"></div>Cargando partidos...</div>';
+    cambiarPantalla('scr-partidos');
+
+    let partidos = [];
+    try {
+        // Intenta cargar los últimos partidos desde el backend
+        // El endpoint /api/trivias no devuelve partidos directamente,
+        // usamos /api/test que expone datos_futbol con detalles del partido
+        const res = await fetch('/api/test');
+        if (!res.ok) throw new Error('No se pudo conectar');
+        const datos = await res.json();
+
+        // El backend devuelve un único partido en datos_futbol.detalles
+        // Construimos hasta 3 partidos si el backend los tiene
+        const df = datos.datos_futbol;
+        if (df && df.detalles && df.detalles.partido && df.detalles.partido !== 'Buscando partido reciente...') {
+            partidos.push({
+                label:   df.detalles.partido,
+                fecha:   df.detalles.fecha   || '',
+                liga:    df.detalles.liga    || liga.nombre,
+                ganador: df.detalles.ganador || '',
+                source:  'api',
             });
         }
+    } catch (e) {
+        console.warn('No se pudo conectar al backend:', e);
+    }
 
-        function verificarRespuesta(opcionSeleccionada) {
-            // Deshabilita los botones para evitar que cambien la opción elegida
-            document.querySelectorAll(".btn-option").forEach(b => b.disabled = true);
-            const feedback = document.getElementById("box-feedback");
-            
-            if (opcionSeleccionada === preguntaActualObj.correcta) {
-                feedback.innerText = "¡Correcto! 🚀";
-                feedback.className = "feedback correct";
-                puntosLocal += 10;
-                document.getElementById("local-score").innerText = `${puntosLocal} pts`;
-            } else {
-                feedback.innerText = `Incorrecto. La respuesta era: ${preguntaActualObj.correcta}`;
-                feedback.className = "feedback incorrect";
-            }
+    // Si no hay partidos del backend, mostramos fallbacks estáticos por liga
+    if (partidos.length === 0) {
+        partidos = getPartidosFallback(liga.id);
+    }
 
-            const esUltima = (indicePreguntaActual === preguntasPartida.length - 1);
-            document.getElementById("btn-next-action").innerText = esUltima ? "Ver Resultados Finales 🏁" : "Siguiente Pregunta ➡️";
-            document.getElementById("btn-next-action").style.display = "block";
+    renderPartidos(partidos);
+}
+
+/* ──────────────────────────────────────────
+   PARTIDOS ESTÁTICOS DE FALLBACK POR LIGA
+────────────────────────────────────────── */
+function getPartidosFallback(ligaId) {
+    const fallbacks = {
+        mundial:    [
+            { label: "Argentina 3 - 3 Francia (4-2 pen)",   fecha: "18/12/2022", liga: "FIFA World Cup", source: "local" },
+            { label: "Argentina 3 - 0 Croacia",              fecha: "13/12/2022", liga: "FIFA World Cup", source: "local" },
+            { label: "Francia 2 - 0 Marruecos",              fecha: "14/12/2022", liga: "FIFA World Cup", source: "local" },
+        ],
+        epl:        [
+            { label: "Manchester City 3 - 1 Arsenal",        fecha: "22/09/2024", liga: "Premier League", source: "local" },
+            { label: "Liverpool 2 - 0 Chelsea",              fecha: "20/10/2024", liga: "Premier League", source: "local" },
+            { label: "Arsenal 1 - 1 Tottenham",              fecha: "01/11/2024", liga: "Premier League", source: "local" },
+        ],
+        laliga:     [
+            { label: "Real Madrid 2 - 1 FC Barcelona",       fecha: "26/10/2024", liga: "La Liga",        source: "local" },
+            { label: "Atlético Madrid 1 - 0 Sevilla",        fecha: "06/10/2024", liga: "La Liga",        source: "local" },
+            { label: "FC Barcelona 3 - 1 Girona",            fecha: "19/10/2024", liga: "La Liga",        source: "local" },
+        ],
+        seriea:     [
+            { label: "Inter Milan 1 - 0 Juventus",           fecha: "27/10/2024", liga: "Serie A",        source: "local" },
+            { label: "AC Milan 2 - 2 Napoli",                fecha: "29/09/2024", liga: "Serie A",        source: "local" },
+            { label: "Roma 1 - 1 Lazio",                     fecha: "06/10/2024", liga: "Serie A",        source: "local" },
+        ],
+        bundesliga: [
+            { label: "Bayern Múnich 4 - 0 Borussia Dortmund",fecha: "02/11/2024", liga: "Bundesliga",     source: "local" },
+            { label: "Bayer Leverkusen 2 - 1 Stuttgart",     fecha: "19/10/2024", liga: "Bundesliga",     source: "local" },
+            { label: "RB Leipzig 2 - 0 Eintracht Frankfurt", fecha: "05/10/2024", liga: "Bundesliga",     source: "local" },
+        ],
+        ligue1:     [
+            { label: "PSG 3 - 0 Olympique de Marsella",      fecha: "27/10/2024", liga: "Ligue 1",        source: "local" },
+            { label: "Monaco 2 - 1 Lyon",                    fecha: "19/10/2024", liga: "Ligue 1",        source: "local" },
+            { label: "Lille 1 - 0 Lens",                     fecha: "05/10/2024", liga: "Ligue 1",        source: "local" },
+        ],
+        champions:  [
+            { label: "Real Madrid 5 - 0 Celtic",             fecha: "05/11/2024", liga: "Champions",      source: "local" },
+            { label: "Manchester City 0 - 4 Sporting CP",    fecha: "05/11/2024", liga: "Champions",      source: "local" },
+            { label: "PSG 1 - 3 Atlético Madrid",            fecha: "06/11/2024", liga: "Champions",      source: "local" },
+        ],
+        mls:        [
+            { label: "Inter Miami 2 - 1 LA Galaxy",          fecha: "01/11/2024", liga: "MLS",            source: "local" },
+            { label: "Seattle Sounders 1 - 0 Portland",      fecha: "19/10/2024", liga: "MLS",            source: "local" },
+            { label: "New York City 2 - 2 Toronto FC",       fecha: "05/10/2024", liga: "MLS",            source: "local" },
+        ],
+    };
+    return fallbacks[ligaId] || [
+        { label: "Partido 1 — próximamente", fecha: "", liga: "", source: "local" },
+    ];
+}
+
+/* ──────────────────────────────────────────
+   RENDER DE PARTIDOS EN LA PANTALLA 2
+────────────────────────────────────────── */
+function renderPartidos(partidos) {
+    const grid = document.getElementById('matches-grid');
+    grid.innerHTML = '';
+
+    // Muestra máximo 3 partidos
+    partidos.slice(0, 3).forEach((p, i) => {
+        // Intenta separar equipos y marcador del label "A X - Y B"
+        const partes = parsearPartido(p.label);
+
+        const card = document.createElement('div');
+        card.className = 'match-card';
+        card.innerHTML = `
+            <div>
+                <div class="match-teams">${partes.local} <span style="color:var(--text-muted);font-weight:400">vs</span> ${partes.visitante}</div>
+                <div class="match-date">${p.fecha ? '📅 ' + p.fecha : ''} ${p.liga ? '· ' + p.liga : ''}</div>
+            </div>
+            <div class="match-score">${partes.score}</div>
+        `;
+        card.onclick = () => seleccionarPartido(p, card);
+        grid.appendChild(card);
+    });
+}
+
+function parsearPartido(label) {
+    // Formato esperado: "Equipo A N - M Equipo B" o "Equipo A N - M Equipo B (X-Y pen)"
+    const rx = /^(.+?)\s+(\d[\d–\-\s]*\d)\s+(.+?)(\s+\(.+\))?$/;
+    const m  = label.match(rx);
+    if (m) {
+        // Intenta encontrar el score en el medio
+        const scoreRx = /(\d+)\s*[-–]\s*(\d+)/;
+        const sm = label.match(scoreRx);
+        if (sm) {
+            const scoreStr = sm[0];
+            const idx = label.indexOf(scoreStr);
+            return {
+                local:     label.slice(0, idx).trim(),
+                visitante: label.slice(idx + scoreStr.length).replace(/\(.+\)/, '').trim(),
+                score:     scoreStr.replace(/\s/g, ''),
+            };
         }
+    }
+    return { local: label, visitante: '', score: 'vs' };
+}
 
-        function avanzarPregunta() {
-            indicePreguntaActual++;
-            if (indicePreguntaActual < preguntasPartida.length) {
-                renderizarPreguntaActual();
-            } else {
-                document.getElementById("box-final-score").innerText = `${puntosLocal} pts`;
-                cambiarPantalla("scr-results");
-            }
-        }
-    </script>
+/* ──────────────────────────────────────────
+   SELECCIÓN DE PARTIDO → inicia trivia
+────────────────────────────────────────── */
+function seleccionarPartido(partido, cardEl) {
+    document.querySelectorAll('.match-card').forEach(c => c.classList.remove('active'));
+    cardEl.classList.add('active');
+    partidoSeleccionado = partido;
+    setTimeout(() => iniciarTrivia(), 300);
+}
+
+/* ──────────────────────────────────────────
+   INICIAR TRIVIA — llama al backend
+────────────────────────────────────────── */
+async function iniciarTrivia() {
+    cambiarPantalla('scr-loading');
+    puntos         = 0;
+    indicePregunta = 0;
+    document.getElementById('local-score').textContent = '0 pts';
+
+    const endpoint = ligaSeleccionada ? ligaSeleccionada.endpoint : '/api/trivias';
+    document.getElementById('loading-msg').textContent =
+        `Generando trivia para: ${partidoSeleccionado ? partidoSeleccionado.label : ''}...`;
+
+    try {
+        const res = await fetch(endpoint);
+        if (!res.ok) throw new Error('Error de servidor');
+        const datos = await res.json();
+        if (datos.error) throw new Error(datos.error);
+        preguntasPartida = (datos.preguntas && datos.preguntas.length > 0)
+            ? datos.preguntas
+            : BANCO_NATIVO;
+    } catch (err) {
+        console.warn('Backend no disponible, usando banco local.', err);
+        preguntasPartida = BANCO_NATIVO;
+    }
+
+    cambiarPantalla('scr-quiz');
+    renderizarPregunta();
+}
+
+/* ──────────────────────────────────────────
+   QUIZ
+────────────────────────────────────────── */
+function renderizarPregunta() {
+    document.getElementById('box-feedback').className = 'feedback';
+    document.getElementById('box-feedback').style.display = 'none';
+    document.getElementById('btn-next-action').style.display = 'none';
+
+    preguntaActualObj = preguntasPartida[indicePregunta];
+    document.getElementById('quiz-progress').textContent =
+        `Pregunta: ${indicePregunta + 1}/${preguntasPartida.length}`;
+    document.getElementById('box-pregunta').textContent = preguntaActualObj.pregunta;
+
+    const cont = document.getElementById('container-options');
+    cont.innerHTML = '';
+    preguntaActualObj.opciones.forEach(op => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-option';
+        btn.textContent = op;
+        btn.onclick = () => verificarRespuesta(op);
+        cont.appendChild(btn);
+    });
+}
+
+function verificarRespuesta(opcion) {
+    document.querySelectorAll('.btn-option').forEach(b => b.disabled = true);
+    const fb = document.getElementById('box-feedback');
+
+    if (opcion === preguntaActualObj.correcta) {
+        fb.textContent = '¡Correcto! 🚀';
+        fb.className   = 'feedback correct';
+        puntos += 10;
+        document.getElementById('local-score').textContent = `${puntos} pts`;
+    } else {
+        fb.textContent = `Incorrecto. La respuesta era: ${preguntaActualObj.correcta}`;
+        fb.className   = 'feedback incorrect';
+    }
+
+    const esUltima = (indicePregunta === preguntasPartida.length - 1);
+    const btnNext  = document.getElementById('btn-next-action');
+    btnNext.textContent = esUltima ? 'Ver resultados 🏁' : 'Siguiente ➡️';
+    btnNext.style.display = 'block';
+}
+
+function avanzarPregunta() {
+    indicePregunta++;
+    if (indicePregunta < preguntasPartida.length) {
+        renderizarPregunta();
+    } else {
+        document.getElementById('box-final-score').textContent = `${puntos} pts`;
+        document.getElementById('result-liga').textContent =
+            ligaSeleccionada
+                ? `${ligaSeleccionada.flag} ${ligaSeleccionada.nombre} · ${partidoSeleccionado ? partidoSeleccionado.label : ''}`
+                : '';
+        cambiarPantalla('scr-results');
+    }
+}
+
+/* ──────────────────────────────────────────
+   INIT
+────────────────────────────────────────── */
+renderMenuLigas();
+</script>
 </body>
 </html>
