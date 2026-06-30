@@ -182,7 +182,7 @@ async def obtener_trivias():
         prompt_contenido = (
             "Eres un experto en futbol. Basandote en tus conocimientos sobre el ultimo partido "
             "del ultimo Mundial, o del Mundial en curso si lo hay, "
-            "crea 10 preguntas de trivia variadas y desafiantes. "
+            "crea 20 preguntas de trivia variadas y desafiantes. "
             "Puedes incluir preguntas sobre: goleadores (Mbappe hat-trick, Di Maria, Messi penales), "
             "sustituciones clave, minutos de los goles, jugadores destacados, estadisticas del partido, "
             "arbitro, asistencias, tarjetas, penales (quien pateo, quien atajo), "
@@ -193,7 +193,7 @@ async def obtener_trivias():
         )
     else:
         prompt_contenido = (
-            f"Crea 10 preguntas de trivia basandote estrictamente en estos jugadores y partido: "
+            f"Crea 20 preguntas de trivia basandote estrictamente en estos jugadores y partido: "
             f"Partido: {datos['detalles']}. "
             f"Jugadores y estadisticas: {json.dumps(info_jugadores, ensure_ascii=False)}. "
             f"Formato: {{\"preguntas\": [{{\"pregunta\": \"...\", "
